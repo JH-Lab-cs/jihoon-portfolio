@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="요청이 겹치거나 중단되고 재시도돼도 첫 기기 등록의 일관성을 지키는 과정입니다.">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Placia — 한 번의 로그인, 일관된 상태. | JIHOON</title>
+  <link rel="alternate" hreflang="en" href="../../../projects/placia/index.html">
+  <link rel="alternate" hreflang="ko" href="index.html">
+  <link rel="icon" href="../../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../../style.css">
+  <script src="../../../script.js" defer></script>
+</head>
+<body id="top" data-page="placia">
+  <a class="skip-link" href="#main">본문으로 이동</a>
+  <header class="site-header"><div class="container header-inner">
+    <a class="brand" href="../../index.html" aria-label="JIHOON — 홈">JIHOON<span class="brand-dot" aria-hidden="true">.</span></a>
+    <nav class="site-nav" id="site-nav" aria-label="주요 메뉴">
+      <a href="../index.html" class="is-active">프로젝트</a>
+      <a href="../../index.html#approach">작업 방식</a>
+      <a href="../../contact/index.html">연락처 <span aria-hidden="true">↗</span></a>
+    </nav>
+    <div class="header-actions"><div class="language-switch" aria-label="언어">
+      <a href="../../../projects/placia/index.html" lang="en" hreflang="en">EN</a>
+      <a href="index.html" lang="ko" hreflang="ko" aria-current="true">한국어</a>
+    </div><button class="menu-toggle" type="button" aria-controls="site-nav" aria-expanded="false" aria-label="메뉴" data-open-label="메뉴" data-close-label="메뉴 닫기"><span></span><span></span></button></div>
+  </div></header>
+  <main id="main" tabindex="-1">
+    <section class="case-heading container"><a class="text-link breadcrumb" href="../index.html"><span aria-hidden="true">←</span> 전체 프로젝트로</a><p class="eyebrow">ENGINEERING CASE STUDY / Placia</p><h1>한 번의 로그인, 일관된 상태.</h1><p class="case-summary">요청이 겹치거나 중단되고 재시도돼도 첫 기기 등록의 일관성을 지키는 과정입니다.</p><div class="case-meta"><span class="status-label">개발 중</span><span>TRAVEL & PRIVACY</span></div></section>
+    <div class="case-layout container"><aside class="case-sidebar"><div class="case-sidebar-inner"><div class="case-identity tone-blue"><strong>Placia</strong><span>TRAVEL & PRIVACY</span></div><dl><dt>진행 상태</dt><dd>개발 중</dd><dt>사용 기술</dt><dd>PostgreSQL · TypeScript · Transactions</dd><dt>작업 방식</dt><dd>AI를 활용한 개발</dd></dl><nav class="case-toc" aria-label="이 페이지의 내용"><a href="#overview">프로젝트 소개 <span aria-hidden="true">↘</span></a><a href="#problem">어떤 문제였나 <span aria-hidden="true">↘</span></a><a href="#decision">어떻게 결정했나 <span aria-hidden="true">↘</span></a><a href="#implementation">구현 방식 <span aria-hidden="true">↘</span></a><a href="#tradeoff">선택에 따른 부담 <span aria-hidden="true">↘</span></a><a href="#verification">확인한 결과 <span aria-hidden="true">↘</span></a><a href="#boundary">현재 구현 범위 <span aria-hidden="true">↘</span></a></nav></div></aside>
+      <article class="case-article"><section id="overview" class="case-section"><p class="eyebrow">01 / 프로젝트 소개</p><h2>Placia</h2><p>Placia는 사진과 장소를 중심으로 여행의 기억을 정리하는 온디바이스 여행 사진 아틀라스입니다. 이 사례는 계정 생성, 첫 기기 승인, 세션 발급을 담당하는 내부 백엔드를 다룹니다.</p></section><section id="problem" class="case-section"><p class="eyebrow">02 / 어떤 문제였나</p><h2>어떤 문제였나</h2><p>서로 다른 계정이 같은 기기 키를 동시에 등록하려는 요청이 충돌할 수 있었습니다. 첫 로그인 도중 중단되면 인증 권한만 소비되고 사용할 계정과 세션은 남지 않을 수도 있었습니다. 일부만 완료된 상태가 다음 요청에서 정상으로 처리되지 않도록 해야 했습니다.</p></section><section id="decision" class="case-section"><p class="eyebrow">03 / 어떻게 결정했나</p><h2>어떻게 결정했나</h2><p>첫 로그인을 하나의 상태 변경으로 처리했습니다. 계정 생성, 첫 기기 승인, 세션 발급, 암호화된 재시도 응답을 하나의 PostgreSQL 트랜잭션으로 묶었습니다.</p></section><section id="implementation" class="case-section"><p class="eyebrow">04 / 구현 방식</p><h2>구현 방식</h2><p>기기와 키를 일정한 순서로 잠그고, 완성되지 않은 트랜잭션은 지연 검사하는 DB 제약으로 거부합니다. 동일한 요청을 다시 보내면 기존 세션을 반환해 별개의 로그인 결과를 만들지 않습니다. 인증 만료 중 정리 작업이 실행되는 경우도 회귀 테스트에 포함했습니다.</p></section><section id="tradeoff" class="case-section"><p class="eyebrow">05 / 선택에 따른 부담</p><h2>선택에 따른 부담</h2><p>일관성을 확보하는 만큼 잠금, DB 제약, 암호화 키 관리가 복잡해집니다. 통합 테스트는 이 장치들이 실제로 함께 작동하는지까지 확인해야 합니다.</p></section><section id="verification" class="case-section"><p class="eyebrow">06 / 확인한 결과</p><h2>확인한 결과</h2><p>해당 구현 체크포인트에서 단위·HTTP 테스트 201건과 PostgreSQL 통합 테스트 70건, 타입 검사·린트·빌드·CI가 통과했습니다. 동시 키 등록, 미완료 트랜잭션, 만료 중 정리 작업이 회귀 테스트에 포함됩니다.</p><div class="result-note"><span aria-hidden="true">↗</span><div><strong>원자적인 기기 등록</strong><p>계정 생성, 기기 승인, 세션 발급이 하나의 트랜잭션 안에서 완료됩니다.</p></div></div></section><section id="boundary" class="case-section"><p class="eyebrow">07 / 현재 구현 범위</p><h2>현재 구현 범위</h2><p>내부 인증 서비스에 관한 사례입니다. 확인한 체크포인트에서는 실행 진입점의 공개 인증 경로가 활성화되지 않았습니다. 출시된 연결 로그인 경험을 검증한 결과는 아닙니다.</p></section><div class="evidence-note"><p class="eyebrow">검증 기록에 관하여</p><p>2026년 9월 5일 확인한 프로젝트 코드, 회귀 테스트, 개발 체크포인트를 바탕으로 작성했습니다. 검증 결과는 당시 기록에 명시된 환경과 범위를 기준으로 설명합니다.</p></div></article>
+    </div><nav class="next-project container" aria-label="다음 프로젝트"><a class="text-link" href="../index.html">← 전체 프로젝트로</a><a href="../whiskory/index.html"><span>다음 프로젝트</span><strong>Whiskory <span aria-hidden="true">↗</span></strong></a></nav></main>
+  <footer class="site-footer container"><a class="brand footer-brand" href="../../index.html">JIHOON<span class="brand-dot" aria-hidden="true">.</span></a><p>© <span data-current-year>2026</span> Jihoon. 아이디어를 만들고, 구현의 근거를 살핍니다.</p><a class="back-top" href="#top">맨 위로 <span aria-hidden="true">↑</span></a></footer>
+</body>
+</html>

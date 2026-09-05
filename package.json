@@ -1,0 +1,22 @@
+{
+  "name": "jihoon-portfolio",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/serve.mjs",
+    "pretest": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.4.1",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "linkedom": "^0.18.13",
+    "typescript": "^7.0.2"
+  }
+}
