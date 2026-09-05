@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
-import { renderAll, renderHome, renderProject, escapeHtml, pagePath } from '../scripts/render.mjs';
+import { renderAll, renderHome, renderProject, escapeHtml, pagePath, normalizeBasePath } from '../scripts/render.mjs';
 import { projects } from '../content/projects.mjs';
 import { copy, contactEmail } from '../content/site.mjs';
 import { capabilities, investigations } from '../content/engineering.mjs';
@@ -44,6 +44,41 @@ test('every local link, asset, and fragment resolves in the generated site', () 
       const destination = file ? new URL(file, `https://portfolio.test/${path}`).pathname.slice(1) : path;
       assert.ok(documents.has(destination) || assets.has(destination), `${path} -> ${value}`);
       if (fragment) assert.ok(documents.get(destination)?.getElementById(fragment), `${path}: broken #${fragment}`);
+    }
+  }
+});
+
+test('deployment base paths accept safe directories and reject executable or ambiguous values', () => {
+  assert.equal(normalizeBasePath('/'), '/');
+  assert.equal(normalizeBasePath('/jihoon-portfolio'), '/jihoon-portfolio/');
+  assert.equal(normalizeBasePath('/team/portfolio.v2/'), '/team/portfolio.v2/');
+  for (const path of ['', 'portfolio', '//elsewhere.test/', '/a//b/', '/a/../b/', '/a/./b/', '/a?b/', '/a#b/', '/%2e%2e/', '/a\\b/', '/<script>/']) {
+    assert.throws(() => renderAll(path), /SITE_BASE_PATH/);
+  }
+});
+
+test('all links remain in the deployment directory, including 404s served at unknown nested URLs', () => {
+  for (const basePath of ['/', '/jihoon-portfolio/', '/team/portfolio/']) {
+    const mountedPages = renderAll(basePath);
+    for (const [file, html] of mountedPages) {
+      const doc = parseHTML(html).document;
+      const requestPath = doc.body.dataset.page === 'not-found' ? `${basePath}unknown/deep/page` : `${basePath}${file}`;
+      for (const element of doc.querySelectorAll('[href], [src]')) {
+        const value = element.getAttribute('href') ?? element.getAttribute('src');
+        if (value.startsWith('mailto:')) continue;
+        if (value.startsWith('#')) {
+          assert.ok(doc.getElementById(value.slice(1)));
+          continue;
+        }
+        const destination = new URL(value, `https://portfolio.test${requestPath}`);
+        assert.equal(destination.origin, 'https://portfolio.test');
+        assert.ok(destination.pathname.startsWith(basePath), `${requestPath} escapes through ${value}`);
+        const target = destination.pathname.slice(basePath.length);
+        assert.ok(mountedPages.has(target) || assets.has(target), `${requestPath} -> ${value}`);
+        if (destination.hash) {
+          assert.ok(parseHTML(mountedPages.get(target)).document.getElementById(destination.hash.slice(1)));
+        }
+      }
     }
   }
 });

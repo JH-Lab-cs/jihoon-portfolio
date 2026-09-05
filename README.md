@@ -61,6 +61,41 @@ sequence, failure scenarios, verification, and related implementation notes.
 Product design, archived prototypes, local verification, and release status are
 identified separately in the content.
 
+## Publishing and future updates
+
+The public portfolio is hosted at
+<https://jh-lab-cs.github.io/jihoon-portfolio/>. English is the default; Korean is
+available at <https://jh-lab-cs.github.io/jihoon-portfolio/ko/>.
+
+The `Verify and deploy portfolio` GitHub Actions workflow tests, lints, checks
+types, and builds changes to `main` before deploying only the contents of `dist/`.
+Pull requests run the same checks without publishing. The repository's Pages
+publishing source must be set to **GitHub Actions**. Actions use pinned commits,
+and deployment permissions are limited to the deployment job.
+
+To update a project's completion status, edit both languages in
+`content/projects.mjs` and keep its product description, implementation status,
+and recorded verification in agreement. For a new project, add the matching slug
+to `content/projects.mjs` and `content/products.mjs`; add engineering notes and
+walkthroughs when evidence is available. The build generates its routes and
+language links. Update the collection tests when the intended project set changes.
+Run the checks above, then commit and push to `main` to publish the update.
+
+The GitHub build uses a deployment prefix so 404 navigation and assets remain
+inside this repository's site, even at an unknown nested URL:
+
+```sh
+SITE_BASE_PATH=/jihoon-portfolio/ npm run build
+```
+
+Without `SITE_BASE_PATH`, builds target `/` for the local server and Sites.
+Generated source HTML retains this root configuration; only `dist/` receives
+the deployment prefix. Pages serves the root English 404 for unknown routes;
+its Korean language link remains available. GitHub Pages does not interpret
+`_headers`; the HTML meta CSP and referrer policy remain present, while the
+additional HTTP response headers are provided by the local server and compatible
+hosts. The source repository is public; only website assets enter the Pages build.
+
 ## Content evidence
 
 Case studies use project code, tests, and development checkpoints reviewed on

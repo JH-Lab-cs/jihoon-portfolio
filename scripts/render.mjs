@@ -22,15 +22,23 @@ export function pagePath(locale, page) {
 export function relativeLink(from, to) {
   return posix.relative(posix.dirname(from), to) || posix.basename(to);
 }
-/** @param {Locale} locale @param {string} page */
-function helpers(locale, page) {
+/** @param {string} value */
+export function normalizeBasePath(value) {
+  const path = value.endsWith('/') ? value : `${value}/`;
+  if (!value.startsWith('/') || !/^\/(?:[A-Za-z0-9_-][A-Za-z0-9._-]*\/)*$/.test(path)) {
+    throw new Error('SITE_BASE_PATH must be an absolute path with safe directory segments.');
+  }
+  return path;
+}
+/** @param {Locale} locale @param {string} page @param {string} basePath */
+function helpers(locale, page, basePath = '/') {
   const path = pagePath(locale, page);
   return {
     c: copy[locale],
     /** @param {string} target */
-    href: (target) => page === 'not-found' ? `/${pagePath(locale, target)}` : relativeLink(path, pagePath(locale, target)),
+    href: (target) => page === 'not-found' ? `${basePath}${pagePath(locale, target)}` : relativeLink(path, pagePath(locale, target)),
     /** @param {string} asset */
-    asset: (asset) => page === 'not-found' ? `/${asset}` : relativeLink(path, asset),
+    asset: (asset) => page === 'not-found' ? `${basePath}${asset}` : relativeLink(path, asset),
   };
 }
 const arrow = '<span aria-hidden="true">↗</span>';
@@ -42,10 +50,10 @@ function productProfile(project, locale) {
   return profile[locale];
 }
 
-/** @param {Locale} locale @param {string} page @param {string} content @param {string} title @param {string} description */
-function layout(locale, page, content, title, description) {
-  const { c, href, asset } = helpers(locale, page);
-  const languageLink = /** @param {Locale} lang */ (lang) => page === 'not-found' ? `/${pagePath(lang, page)}` : relativeLink(pagePath(locale, page), pagePath(lang, page));
+/** @param {Locale} locale @param {string} page @param {string} content @param {string} title @param {string} description @param {string} basePath */
+function layout(locale, page, content, title, description, basePath = '/') {
+  const { c, href, asset } = helpers(locale, page, basePath);
+  const languageLink = /** @param {Locale} lang */ (lang) => page === 'not-found' ? `${basePath}${pagePath(lang, page)}` : relativeLink(pagePath(locale, page), pagePath(lang, page));
   const workActive = !['home', 'contact', 'not-found'].includes(page);
   return `<!DOCTYPE html>
 <html lang="${locale}">
@@ -114,7 +122,7 @@ export function renderHome(locale) {
 /** @param {Locale} locale */
 export function renderProjects(locale) {
   const c = copy[locale];
-  return layout(locale, 'projects', `<section class="page-heading container"><p class="eyebrow">SELECTED WORK / 06 PROJECTS</p><h1>${c.workTitle}</h1><p>${c.workIntro}</p></section><section class="container all-projects" aria-label="${c.nav[0]}"><div class="project-grid">${projects.map((project, index) => projectCard(project, locale, 'projects', index)).join('')}</div></section>${cta(locale, 'projects')}`, `${c.nav[0]} — JIHOON`, c.workIntro);
+  return layout(locale, 'projects', `<section class="page-heading container"><p class="eyebrow">SELECTED WORK / ${String(projects.length).padStart(2, '0')} PROJECTS</p><h1>${c.workTitle}</h1><p>${c.workIntro}</p></section><section class="container all-projects" aria-label="${c.nav[0]}"><div class="project-grid">${projects.map((project, index) => projectCard(project, locale, 'projects', index)).join('')}</div></section>${cta(locale, 'projects')}`, `${c.nav[0]} — JIHOON`, c.workIntro);
 }
 /** @param {Locale} locale @param {Project} project */
 function renderInvestigations(locale, project) {
@@ -157,19 +165,22 @@ export function renderContact(locale) {
   const c = copy[locale];
   return layout(locale, 'contact', `<section class="contact-page container"><p class="eyebrow">CONTACT / JIHOON</p><h1>${c.contactTitle}</h1><p class="contact-intro">${c.contactIntro}</p><a class="email-card" href="mailto:${contactEmail}"><span>${c.emailLabel}</span><strong>${contactEmail}</strong><span class="email-arrow" aria-hidden="true">↗</span></a><div class="contact-details"><p>${c.contactNote}</p><ul class="focus-tags">${c.contactTopics.map((topic) => `<li>${topic}</li>`).join('')}</ul></div></section>`, `${c.nav[2]} — JIHOON`, c.contactIntro);
 }
-/** @param {Locale} locale */
-export function renderNotFound(locale) {
-  const { c, href } = helpers(locale, 'not-found');
-  return layout(locale, 'not-found', `<section class="contact-page container"><p class="eyebrow">404 / JIHOON</p><h1>${c.notFoundTitle}</h1><p class="contact-intro">${c.notFoundText}</p><a class="button button-primary" href="${href('projects')}">${c.returnWork} ${arrow}</a></section>`, '404 — JIHOON', c.notFoundText);
+/** @param {Locale} locale @param {string} basePath */
+export function renderNotFound(locale, basePath = '/') {
+  const prefix = normalizeBasePath(basePath);
+  const { c, href } = helpers(locale, 'not-found', prefix);
+  return layout(locale, 'not-found', `<section class="contact-page container"><p class="eyebrow">404 / JIHOON</p><h1>${c.notFoundTitle}</h1><p class="contact-intro">${c.notFoundText}</p><a class="button button-primary" href="${href('projects')}">${c.returnWork} ${arrow}</a></section>`, '404 — JIHOON', c.notFoundText, prefix);
 }
-export function renderAll() {
+/** @param {string} basePath */
+export function renderAll(basePath = '/') {
+  const prefix = normalizeBasePath(basePath);
   /** @type {Map<string, string>} */
   const pages = new Map();
   for (const locale of /** @type {const} */ (['en', 'ko'])) {
     pages.set(pagePath(locale, 'home'), renderHome(locale));
     pages.set(pagePath(locale, 'projects'), renderProjects(locale));
     pages.set(pagePath(locale, 'contact'), renderContact(locale));
-    pages.set(pagePath(locale, 'not-found'), renderNotFound(locale));
+    pages.set(pagePath(locale, 'not-found'), renderNotFound(locale, prefix));
     for (const project of projects) pages.set(pagePath(locale, project.slug), renderProject(locale, project));
   }
   return pages;
