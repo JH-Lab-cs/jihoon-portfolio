@@ -1,5 +1,6 @@
 import { posix } from 'node:path';
-import { copy } from '../content/site.mjs';
+import { copy, contactEmail } from '../content/site.mjs';
+import { capabilities, investigations, projectFocus } from '../content/engineering.mjs';
 import { projects } from '../content/projects.mjs';
 
 /** @typedef {'en' | 'ko'} Locale */
@@ -77,9 +78,12 @@ function layout(locale, page, content, title, description) {
 function projectCard(project, locale, page, index) {
   const { c, href } = helpers(locale, page);
   const p = project[locale];
-  return `<article class="project-card tone-${project.tone}"><a class="project-link" href="${href(project.slug)}">
-    <div class="project-visual"><div class="visual-meta"><span>${project.category}</span><span>0${index + 1}</span></div><strong class="project-wordmark">${escapeHtml(project.name)}</strong><div class="mini-flow" aria-hidden="true">${project.flow.map((step) => `<span>${escapeHtml(step)}</span>`).join('<b>→</b>')}</div><div class="visual-bottom"><span class="status-label">${p.status}</span><span class="round-arrow" aria-hidden="true">↗</span></div></div>
-    <div class="project-copy"><div class="tag-line">${project.tags.map(escapeHtml).join(' <span aria-hidden="true">/</span> ')}</div><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.summary)}</p><span class="text-link">${project.kind === 'case' ? c.readCase : c.viewProject} ${arrow}</span></div>
+  const focus = projectFocus[/** @type {keyof typeof projectFocus} */ (project.slug)]?.[locale] ?? [];
+  return `<article class="project-card"><a class="project-link" href="${href(project.slug)}">
+    <span class="project-number" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
+    <div class="project-identity"><p class="project-category">${escapeHtml(project.category)}</p><h3>${escapeHtml(project.name)}</h3><span class="status-label">${escapeHtml(p.status)}</span><div class="tag-line">${project.tags.map(escapeHtml).join(' · ')}</div></div>
+    <div class="project-copy"><h4>${escapeHtml(p.title)}</h4><p>${escapeHtml(p.summary)}</p><ul class="project-focus">${focus.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>
+    <span class="project-action"><span>${project.kind === 'case' ? c.readCase : c.viewProject}</span><span aria-hidden="true">↗</span></span>
   </a></article>`;
 }
 /** @param {Locale} locale @param {string} page */
@@ -91,12 +95,11 @@ function cta(locale, page) {
 export function renderHome(locale) {
   const { c, href } = helpers(locale, 'home');
   return layout(locale, 'home', `
-    <section class="hero container"><div class="hero-copy"><p class="eyebrow"><span class="live-dot" aria-hidden="true"></span>${c.eyebrow}</p><h1>${c.headline[0]}<br><span>${c.headline[1]}</span></h1><p class="hero-intro">${c.intro}</p><div class="hero-actions"><a class="button button-primary" href="#selected-work">${c.viewWork} <span aria-hidden="true">↓</span></a><a class="button button-quiet" href="${href('contact')}">${c.contact} ${arrow}</a></div><ul class="focus-tags">${c.focus.map((text) => `<li>${text}</li>`).join('')}</ul></div>
-      <aside class="system-board" aria-label="${c.diagramTitle}"><div class="board-header"><span class="board-symbol" aria-hidden="true">[ J ]</span><span>SYSTEM NOTES / 01</span><span class="board-light" aria-hidden="true"></span></div><p class="board-title">${c.diagramTitle}</p><ol class="system-flow">${c.diagramSteps.map((step, index) => `<li><span class="step-number">0${index + 1}</span><span>${step}</span><span class="step-mark" aria-hidden="true">${index === 3 ? '✓' : '↳'}</span></li>`).join('')}</ol><div class="board-notes">${c.diagramLabels.map((text) => `<span>${text}</span>`).join('')}</div></aside>
-    </section>
+    <section class="hero container"><p class="eyebrow">${c.eyebrow}</p><h1>${c.headline[0]}<br><span>${c.headline[1]}</span></h1><div class="hero-bottom"><div class="hero-description"><p class="hero-intro">${c.intro}</p><p class="hero-technologies">${c.heroNote}</p></div><div class="hero-actions"><a class="button button-primary" href="#selected-work">${c.viewWork} <span aria-hidden="true">↓</span></a><a class="hero-email" href="mailto:${contactEmail}">${contactEmail} <span aria-hidden="true">↗</span></a></div></div></section>
     <section class="work-section container" id="selected-work"><div class="section-heading"><div><p class="eyebrow">${c.selectedLabel}</p><h2>${c.selectedTitle}</h2><p>${c.selectedIntro}</p></div><a class="text-link" href="${href('projects')}">${c.allWork} ${arrow}</a></div><div class="project-grid">${projects.filter((project) => project.kind === 'case').map((project, index) => projectCard(project, locale, 'home', index)).join('')}</div></section>
-    <section class="approach-section" id="approach"><div class="container approach-grid"><div><p class="eyebrow">${c.approachLabel}</p><h2>${c.approachTitle.split('\n').join('<br>')}</h2><p class="approach-intro">${c.approachIntro}</p></div><ol class="approach-list">${c.approachItems.map(([title, text], index) => `<li><span class="approach-number">0${index + 1}</span><div><h3>${title}</h3><p>${text}</p></div></li>`).join('')}</ol></div></section>
-    <section class="explorations container"><div class="section-heading"><div><p class="eyebrow">${c.moreLabel}</p><h2>${c.moreTitle}</h2><p>${c.moreIntro}</p></div></div><div class="project-rows">${projects.filter((project) => project.kind !== 'case').map((project) => `<a class="project-row" href="${href(project.slug)}"><span class="row-name">${escapeHtml(project.name)}</span><span class="row-summary">${escapeHtml(project[locale].summary)}</span><span class="row-status">${project[locale].status}</span><span aria-hidden="true">↗</span></a>`).join('')}</div></section>
+    <section class="expertise-section" id="approach"><div class="container"><div class="section-heading"><div><p class="eyebrow">${c.approachLabel}</p><h2>${c.approachTitle.split('\n').join('<br>')}</h2></div><p class="section-aside">${c.approachIntro}</p></div><div class="capability-grid">${capabilities.map((item, index) => `<a class="capability" href="${href(item.project)}#${item.anchor}"><span class="capability-index">${String(index + 1).padStart(2, '0')}</span><div><h3>${escapeHtml(item[locale].title)}</h3><p>${escapeHtml(item[locale].detail)}</p><span class="capability-source">${escapeHtml(projects.find((project) => project.slug === item.project)?.name ?? '')} ${arrow}</span></div></a>`).join('')}</div></div></section>
+    <section class="explorations container"><div class="section-heading"><div><p class="eyebrow">${c.moreLabel}</p><h2>${c.moreTitle}</h2><p>${c.moreIntro}</p></div></div><div class="project-rows">${projects.filter((project) => project.kind !== 'case').map((project) => `<a class="project-row" href="${href(project.slug)}"><span class="row-name">${escapeHtml(project.name)}</span><span class="row-summary">${escapeHtml(project[locale].summary)}</span><span class="row-status">${escapeHtml(project[locale].status)}</span><span aria-hidden="true">↗</span></a>`).join('')}</div></section>
+    <section class="practice-section container"><div class="practice-heading"><p class="eyebrow">${c.aboutLabel}</p><h2>${c.aboutTitle}</h2><p>${c.aboutText}</p></div><ol class="practice-list">${c.approachItems.map(([title, text], index) => `<li><span>${String(index + 1).padStart(2, '0')}</span><div><h3>${title}</h3><p>${text}</p></div></li>`).join('')}</ol><div class="reuse-practice"><p class="eyebrow">${c.reuseLabel}</p><h3>${c.reuseTitle}</h3><p>${c.reuseText}</p><a class="text-link" href="${href('resol-math')}#implementation">${c.reuseLink} ${arrow}</a></div></section>
     ${cta(locale, 'home')}`, c.siteTitle, c.description);
 }
 /** @param {Locale} locale */
@@ -105,22 +108,29 @@ export function renderProjects(locale) {
   return layout(locale, 'projects', `<section class="page-heading container"><p class="eyebrow">SELECTED WORK / 06 PROJECTS</p><h1>${c.workTitle}</h1><p>${c.workIntro}</p></section><section class="container all-projects" aria-label="${c.nav[0]}"><div class="project-grid">${projects.map((project, index) => projectCard(project, locale, 'projects', index)).join('')}</div></section>${cta(locale, 'projects')}`, `${c.nav[0]} — JIHOON`, c.workIntro);
 }
 /** @param {Locale} locale @param {Project} project */
+function renderInvestigations(locale, project) {
+  const c = copy[locale];
+  const notes = investigations.filter((item) => item.project === project.slug);
+  if (notes.length === 0) return '';
+  return `<section class="related-engineering" id="related-engineering"><p class="eyebrow">${c.investigationsLabel}</p><h2>${c.investigationsTitle}</h2>${notes.map((item) => `<article class="engineering-note" id="${item.id}"><h3>${escapeHtml(item[locale].title)}</h3><dl><dt>${c.challengeLabel}</dt><dd>${escapeHtml(item[locale].scenario)}</dd><dt>${c.solutionLabel}</dt><dd>${escapeHtml(item[locale].solution)}</dd><dt>${c.checkLabel}</dt><dd>${escapeHtml(item[locale].check)}</dd></dl></article>`).join('')}</section>`;
+}
+/** @param {Locale} locale @param {Project} project */
 export function renderProject(locale, project) {
   const { c, href } = helpers(locale, project.slug);
   const p = project[locale];
   const sections = /** @type {const} */ (['overview', 'problem', 'decision', 'implementation', 'tradeoff', 'verification', 'boundary']);
-  const visibleSections = project.kind !== 'archive' ? sections : /** @type {const} */ (['overview', 'decision', 'verification', 'boundary']);
+  const visibleSections = sections;
   const next = projects[(projects.indexOf(project) + 1) % projects.length];
   return layout(locale, project.slug, `
     <section class="case-heading container"><a class="text-link breadcrumb" href="${href('projects')}"><span aria-hidden="true">←</span> ${c.returnWork}</a><p class="eyebrow">${project.kind === 'case' ? c.caseLabel : c.projectLabel} / ${escapeHtml(project.name)}</p><h1>${escapeHtml(p.title)}</h1><p class="case-summary">${escapeHtml(p.summary)}</p><div class="case-meta"><span class="status-label">${p.status}</span><span>${project.category}</span></div></section>
     <div class="case-layout container"><aside class="case-sidebar"><div class="case-sidebar-inner"><div class="case-identity tone-${project.tone}"><strong>${escapeHtml(project.name)}</strong><span>${project.category}</span></div><dl><dt>${c.status}</dt><dd>${p.status}</dd><dt>${c.stack}</dt><dd>${project.tags.join(' · ')}</dd><dt>${c.process}</dt><dd>${c.processValue}</dd></dl><nav class="case-toc" aria-label="${locale === 'en' ? 'On this page' : '이 페이지의 내용'}">${visibleSections.map((section) => `<a href="#${section}">${c[section]} <span aria-hidden="true">↘</span></a>`).join('')}</nav></div></aside>
-      <article class="case-article">${visibleSections.map((section, index) => `<section id="${section}" class="case-section"><p class="eyebrow">0${index + 1} / ${c[section]}</p><h2>${section === 'overview' ? project.name : c[section]}</h2><p>${escapeHtml(p[section])}</p>${section === 'verification' ? `<div class="result-note"><span aria-hidden="true">↗</span><div><strong>${escapeHtml(p.result)}</strong><p>${escapeHtml(p.resultDetail)}</p></div></div>` : ''}</section>`).join('')}<div class="evidence-note"><p class="eyebrow">${c.evidenceLabel}</p><p>${c.evidenceNote}</p></div></article>
-    </div><nav class="next-project container" aria-label="${c.nextProject}"><a class="text-link" href="${href('projects')}">← ${c.returnWork}</a><a href="${href(next.slug)}"><span>${c.nextProject}</span><strong>${escapeHtml(next.name)} ${arrow}</strong></a></nav>`, `${escapeHtml(project.name)} — ${p.title} | JIHOON`, p.summary);
+      <article class="case-article">${visibleSections.map((section, index) => `<section id="${section}" class="case-section"><p class="eyebrow">${String(index + 1).padStart(2, '0')}</p><h2>${escapeHtml(section === 'overview' ? project.name : c[section])}</h2><p>${escapeHtml(p[section])}</p>${section === 'verification' ? `<div class="result-note"><span aria-hidden="true">↗</span><div><strong>${escapeHtml(p.result)}</strong><p>${escapeHtml(p.resultDetail)}</p></div></div>` : ''}</section>${section === 'implementation' ? renderInvestigations(locale, project) : ''}`).join('')}<div class="evidence-note"><p class="eyebrow">${c.evidenceLabel}</p><p>${c.evidenceNote}</p></div></article>
+    </div><nav class="next-project container" aria-label="${c.nextProject}"><a class="text-link" href="${href('projects')}">← ${c.returnWork}</a><a href="${href(next.slug)}"><span>${c.nextProject}</span><strong>${escapeHtml(next.name)} ${arrow}</strong></a></nav>`, `${project.name} — ${p.title} | JIHOON`, p.summary);
 }
 /** @param {Locale} locale */
 export function renderContact(locale) {
   const c = copy[locale];
-  return layout(locale, 'contact', `<section class="contact-page container"><p class="eyebrow">CONTACT / JIHOON</p><h1>${c.contactTitle}</h1><p class="contact-intro">${c.contactIntro}</p><a class="email-card" href="mailto:atomwlgns8@gmail.com"><span>${c.emailLabel}</span><strong>atomwlgns8@gmail.com</strong><span class="email-arrow" aria-hidden="true">↗</span></a><div class="contact-details"><p>${c.contactNote}</p><ul class="focus-tags">${c.contactTopics.map((topic) => `<li>${topic}</li>`).join('')}</ul></div></section>`, `${c.nav[2]} — JIHOON`, c.contactIntro);
+  return layout(locale, 'contact', `<section class="contact-page container"><p class="eyebrow">CONTACT / JIHOON</p><h1>${c.contactTitle}</h1><p class="contact-intro">${c.contactIntro}</p><a class="email-card" href="mailto:${contactEmail}"><span>${c.emailLabel}</span><strong>${contactEmail}</strong><span class="email-arrow" aria-hidden="true">↗</span></a><div class="contact-details"><p>${c.contactNote}</p><ul class="focus-tags">${c.contactTopics.map((topic) => `<li>${topic}</li>`).join('')}</ul></div></section>`, `${c.nav[2]} — JIHOON`, c.contactIntro);
 }
 /** @param {Locale} locale */
 export function renderNotFound(locale) {

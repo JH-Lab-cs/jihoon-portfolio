@@ -5,7 +5,8 @@ import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
 import { renderAll, renderHome, renderProject, escapeHtml, pagePath } from '../scripts/render.mjs';
 import { projects } from '../content/projects.mjs';
-import { copy } from '../content/site.mjs';
+import { copy, contactEmail } from '../content/site.mjs';
+import { capabilities, investigations } from '../content/engineering.mjs';
 
 const pages = renderAll();
 const documents = new Map([...pages].map(([path, html]) => [path, parseHTML(html).document]));
@@ -79,12 +80,50 @@ test('translation schemas match and all case studies include decision, evidence,
 test('HTML text escaping prevents content from creating executable elements', () => {
   assert.equal(escapeHtml('<script>"x" & \'y\'</script>'), '&lt;script&gt;&quot;x&quot; &amp; &#39;y&#39;&lt;/script&gt;');
   const malicious = structuredClone(projects[0]);
+  malicious.name = '<img src=x onerror=alert(1)>';
   malicious.en.title = '<img src=x onerror=alert(1)>';
   malicious.en.overview = '<script>alert(1)</script>';
   const { document } = parseHTML(renderProject('en', malicious));
   assert.equal(document.querySelectorAll('script:not([src])').length, 0);
   assert.equal(document.querySelectorAll('[onerror]').length, 0);
   assert.ok(document.querySelector('h1').textContent.includes('<img'));
+});
+
+test('contact links use the requested email in both language versions', () => {
+  assert.equal(contactEmail, 'dev.wlgns@gmail.com');
+  for (const [path, doc] of documents) {
+    for (const link of doc.querySelectorAll('a[href^="mailto:"]')) {
+      assert.equal(link.getAttribute('href'), `mailto:${contactEmail}`, path);
+      assert.ok(link.textContent.includes(contactEmail));
+    }
+    if (['home', 'contact'].includes(doc.body.dataset.page)) {
+      assert.ok(doc.querySelector(`a[href="mailto:${contactEmail}"]`), path);
+    }
+    assert.ok(!doc.body.textContent.includes('atomwlgns8@gmail.com'));
+  }
+});
+
+test('engineering topics link to substantive bilingual implementation notes', () => {
+  assert.equal(capabilities.length, 6);
+  assert.equal(investigations.length, 9);
+  for (const locale of ['en', 'ko']) {
+    const home = documents.get(pagePath(locale, 'home'));
+    assert.equal(home.querySelectorAll('.capability').length, 6);
+    assert.equal(home.querySelector('.system-board'), null);
+    assert.equal(home.querySelector('.project-visual'), null);
+    assert.ok(home.querySelector('.reuse-practice a'));
+    for (const item of investigations) {
+      const note = documents.get(pagePath(locale, item.project)).getElementById(item.id);
+      assert.ok(note, `${locale}: ${item.id}`);
+      assert.equal(note.querySelectorAll('dt').length, 3);
+      assert.equal(note.querySelectorAll('dd').length, 3);
+      assert.equal(note.querySelector('h3').textContent, item[locale].title);
+      for (const value of Object.values(item[locale])) assert.ok(value.trim().length > 15);
+    }
+    const archive = documents.get(pagePath(locale, 'resol-math'));
+    assert.ok(archive.querySelector('#implementation'));
+    assert.ok(archive.querySelector('#tradeoff'));
+  }
 });
 
 test('rendered content works without JavaScript and restricts active resources', () => {
