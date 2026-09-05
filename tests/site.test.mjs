@@ -7,6 +7,8 @@ import { renderAll, renderHome, renderProject, escapeHtml, pagePath } from '../s
 import { projects } from '../content/projects.mjs';
 import { copy, contactEmail } from '../content/site.mjs';
 import { capabilities, investigations } from '../content/engineering.mjs';
+import { productProfiles } from '../content/products.mjs';
+import { walkthroughs } from '../content/walkthroughs.mjs';
 
 const pages = renderAll();
 const documents = new Map([...pages].map(([path, html]) => [path, parseHTML(html).document]));
@@ -87,6 +89,78 @@ test('HTML text escaping prevents content from creating executable elements', ()
   assert.equal(document.querySelectorAll('script:not([src])').length, 0);
   assert.equal(document.querySelectorAll('[onerror]').length, 0);
   assert.ok(document.querySelector('h1').textContent.includes('<img'));
+});
+
+test('project lists introduce each product and details separate the product from its engineering case', () => {
+  assert.equal(productProfiles.length, projects.length);
+  assert.equal(new Set(productProfiles.map((profile) => profile.slug)).size, projects.length);
+  for (const locale of ['en', 'ko']) {
+    const listing = documents.get(pagePath(locale, 'projects'));
+    for (const [index, project] of projects.entries()) {
+      const profile = productProfiles.find((item) => item.slug === project.slug);
+      assert.ok(profile);
+      assert.deepEqual(Object.keys(profile.en).sort(), Object.keys(profile.ko).sort());
+      const card = listing.querySelectorAll('.project-card')[index];
+      assert.equal(card.querySelector('h4').textContent, profile[locale].title);
+      assert.ok(card.textContent.includes(profile[locale].summary));
+      assert.ok(!card.textContent.includes(project[locale].title));
+      assert.equal(card.querySelectorAll('.project-features li').length, 3);
+      const detail = documents.get(pagePath(locale, project.slug));
+      assert.equal(detail.querySelector('h1').textContent, project.name);
+      assert.equal(detail.querySelector('.case-product-title').textContent, profile[locale].title);
+      assert.equal(detail.querySelector('#engineering h2').textContent, project[locale].title);
+      assert.equal(detail.querySelector('#overview p:not(.eyebrow)').textContent, profile[locale].context);
+      assert.equal(detail.querySelectorAll('.product-workflow li').length, 3);
+      const articleSections = [...detail.querySelectorAll('.case-article > section')].map((section) => section.id);
+      assert.ok(articleSections.indexOf('overview') < articleSections.indexOf('engineering'));
+      assert.ok(articleSections.indexOf('engineering') < articleSections.indexOf('problem'));
+    }
+  }
+});
+
+test('each main case includes a bilingual execution sequence, invariant, and accessible verification table', () => {
+  assert.deepEqual(walkthroughs.map((item) => item.project).sort(), projects.filter((project) => project.kind === 'case').map((project) => project.slug).sort());
+  for (const entry of walkthroughs) {
+    assert.deepEqual(Object.keys(entry.en).sort(), Object.keys(entry.ko).sort());
+    for (const locale of ['en', 'ko']) {
+      const doc = documents.get(pagePath(locale, entry.project));
+      const flow = doc.querySelector('#implementation #execution-flow');
+      assert.ok(flow);
+      assert.equal(flow.querySelector('.invariant-note p').textContent, entry[locale].invariant);
+      assert.equal(flow.querySelectorAll('.execution-steps li').length, 4);
+      assert.equal(flow.querySelectorAll('tbody tr').length, 3);
+      assert.equal(flow.querySelectorAll('thead th[scope="col"]').length, 2);
+      assert.equal(flow.querySelectorAll('tbody th[scope="row"]').length, 3);
+      assert.equal(flow.querySelector('caption').textContent, copy[locale].scenariosLabel);
+      assert.equal(flow.querySelector('.walkthrough-scope').textContent, entry[locale].scope);
+    }
+  }
+});
+
+test('product and walkthrough content cannot inject markup into new rendering surfaces', () => {
+  const profile = productProfiles[0].en;
+  const walk = walkthroughs[0].en;
+  const originalTitle = profile.title;
+  const originalDetail = profile.workflow[0].detail;
+  const originalInvariant = walk.invariant;
+  const originalCheck = walk.checks[0][1];
+  const payload = '<img src=x onerror=alert(1)>';
+  try {
+    profile.title = payload;
+    profile.workflow[0].detail = payload;
+    walk.invariant = payload;
+    walk.checks[0][1] = payload;
+    for (const html of [renderHome('en'), renderProject('en', projects[0])]) {
+      const doc = parseHTML(html).document;
+      assert.equal(doc.querySelectorAll('[onerror], img, script:not([src])').length, 0);
+      assert.ok(doc.body.textContent.includes(payload));
+    }
+  } finally {
+    profile.title = originalTitle;
+    profile.workflow[0].detail = originalDetail;
+    walk.invariant = originalInvariant;
+    walk.checks[0][1] = originalCheck;
+  }
 });
 
 test('contact links use the requested email in both language versions', () => {

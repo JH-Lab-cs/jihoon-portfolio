@@ -39,6 +39,10 @@ node /opt/homebrew/lib/node_modules/npm/bin/npm-cli.js run build
 
 - `content/site.mjs`: English and Korean interface copy.
 - `content/projects.mjs`: Six project descriptions and case studies.
+- `content/products.mjs`: Product-first introductions and three-step user journeys
+  for the six projects; used in both listings and project-detail introductions.
+- `content/walkthroughs.mjs`: Four engineering execution sequences, invariants,
+  scenario tables, and verification scope statements for the main case studies.
 - `content/engineering.mjs`: Six technical focus areas and nine additional
   implementation notes linked to the corresponding case studies.
 - `scripts/render.mjs`: Shared layouts and relative route generation.
@@ -50,6 +54,12 @@ Edit the content and renderer rather than generated HTML. Existing `index.html`,
 `projects/index.html`, and `contact/index.html` entry points remain available.
 All content and language links work without JavaScript. Local file viewing also
 uses relative links; use the HTTP preview for consistent security behavior.
+
+Project lists explain the product and its user-facing features. Detail pages start
+with the product experience, followed by the main engineering case, processing
+sequence, failure scenarios, verification, and related implementation notes.
+Product design, archived prototypes, local verification, and release status are
+identified separately in the content.
 
 ## Content evidence
 
