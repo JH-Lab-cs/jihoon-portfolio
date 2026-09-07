@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
-import { renderAll, renderHome, renderStudio, renderProject, escapeHtml, pagePath, normalizeBasePath } from '../scripts/render.mjs';
+import { renderAll, renderHome, renderProject, escapeHtml, pagePath, normalizeBasePath } from '../scripts/render.mjs';
 import { projects } from '../content/projects.mjs';
 import { copy, contactEmail } from '../content/site.mjs';
 import { capabilities, investigations } from '../content/engineering.mjs';
@@ -17,10 +17,10 @@ const documents = new Map([...pages].map(([path, html]) => [path, parseHTML(html
 const assets = new Set(publicAssets);
 
 test('both languages include every project and the existing public routes', () => {
-  assert.equal(pages.size, 22);
+  assert.equal(pages.size, 20);
   assert.equal(new Set(projects.map((project) => project.slug)).size, 6);
   for (const locale of ['en', 'ko']) {
-    for (const page of ['home', 'studio', 'projects', 'contact', ...projects.map((project) => project.slug)]) {
+    for (const page of ['home', 'projects', 'contact', ...projects.map((project) => project.slug)]) {
       const doc = documents.get(pagePath(locale, page));
       assert.ok(doc);
       assert.equal(doc.documentElement.lang, locale);
@@ -200,25 +200,15 @@ test('product and walkthrough content cannot inject markup into new rendering su
   }
 });
 
-test('studio is a separate bilingual edition with shared content and working classic links', () => {
-  for (const locale of ['en', 'ko']) {
-    const studio = documents.get(pagePath(locale, 'studio'));
-    const classic = documents.get(pagePath(locale, 'home'));
-    assert.equal(studio.querySelectorAll('.studio-card').length, projects.length);
-    assert.equal(studio.querySelectorAll('.studio-capabilities > a').length, capabilities.length);
-    assert.equal(studio.querySelectorAll('link[rel="stylesheet"]').length, 2);
-    assert.equal(classic.querySelectorAll('link[rel="stylesheet"]').length, 1);
-    assert.equal(classic.querySelector('.studio-hero'), null);
-    assert.ok(studio.querySelector('.studio-hero h1').textContent.includes(copy[locale].headline[0]));
-    assert.equal(studio.querySelector('.studio-intro').textContent, copy[locale].intro);
-    for (const profile of productProfiles) {
-      assert.ok(studio.body.textContent.includes(profile[locale].title));
-      assert.ok(studio.body.textContent.includes(profile[locale].summary));
-    }
-    const classicLink = studio.querySelector('.studio-topline .edition-link');
-    const studioLink = classic.querySelector('.hero-topline .edition-link');
-    for (const [link, from, target] of [[classicLink, 'studio', 'home'], [studioLink, 'home', 'studio']]) {
-      assert.equal(new URL(link.getAttribute('href'), `https://portfolio.test/${pagePath(locale, from)}`).pathname.slice(1), pagePath(locale, target));
+test('only the original design is published and retired edition links are removed', () => {
+  assert.ok(!assets.has('studio.css'));
+  assert.ok(!pages.has('studio/index.html'));
+  assert.ok(!pages.has('ko/studio/index.html'));
+  for (const [path, doc] of documents) {
+    assert.equal(doc.querySelectorAll('link[rel="stylesheet"]').length, 1, path);
+    assert.equal(doc.querySelector('.edition-link'), null, path);
+    for (const element of doc.querySelectorAll('[href], [src]')) {
+      assert.ok(!/studio/i.test(element.getAttribute('href') ?? element.getAttribute('src')), path);
     }
   }
 });
@@ -235,6 +225,12 @@ test('product screens have local assets, dimensions, captions, and explicit imag
       const doc = documents.get(pagePath(locale, group.project));
       const gallery = doc.querySelector('#product-screens');
       assert.ok(gallery);
+      const screenLink = doc.querySelector('.case-meta a[href="#product-screens"]');
+      assert.equal(screenLink.textContent.trim(), copy[locale].viewScreens + ' ↓');
+      assert.ok(doc.querySelector('.case-toc a[href="#product-screens"]'));
+      const sectionIds = [...doc.querySelectorAll('.case-article > section')].map((section) => section.id);
+      assert.ok(sectionIds.indexOf('overview') < sectionIds.indexOf('product-screens'));
+      assert.ok(sectionIds.indexOf('product-screens') < sectionIds.indexOf('engineering'));
       assert.equal(gallery.querySelectorAll('figure').length, group.images.length);
       for (const [index, figure] of [...gallery.querySelectorAll('figure')].entries()) {
         const screen = group.images[index];
@@ -265,26 +261,28 @@ test('main case studies include specific source and test references without expo
   }
 });
 
-test('image captions and source references are escaped in both editions', () => {
-  const screen = projectMedia[0].images[0].en;
-  const evidence = implementationEvidence[0].en.references[0];
-  const previous = { alt: screen.alt, caption: screen.caption, path: evidence.path, detail: evidence.detail };
+test('image captions and source references are escaped in both languages', () => {
   const payload = '<img src=x onerror=alert(1)>';
-  try {
-    screen.alt = payload;
-    screen.caption = payload;
-    evidence.path = payload;
-    evidence.detail = payload;
-    for (const html of [renderStudio('en'), renderProject('en', projects[0])]) {
-      const doc = parseHTML(html).document;
+  for (const locale of ['en', 'ko']) {
+    const screen = projectMedia[0].images[0][locale];
+    const evidence = implementationEvidence[0][locale].references[0];
+    const previous = { alt: screen.alt, caption: screen.caption, path: evidence.path, detail: evidence.detail };
+    try {
+      screen.alt = payload;
+      screen.caption = payload;
+      evidence.path = payload;
+      evidence.detail = payload;
+      const doc = parseHTML(renderProject(locale, projects[0])).document;
       assert.equal(doc.querySelectorAll('[onerror], script:not([src])').length, 0);
       assert.ok([...doc.querySelectorAll('img')].some((image) => image.getAttribute('alt') === payload));
+      assert.ok(doc.querySelector('#product-screens figcaption').textContent.includes(payload));
+      assert.ok(doc.querySelector('#implementation-evidence').textContent.includes(payload));
+    } finally {
+      screen.alt = previous.alt;
+      screen.caption = previous.caption;
+      evidence.path = previous.path;
+      evidence.detail = previous.detail;
     }
-  } finally {
-    screen.alt = previous.alt;
-    screen.caption = previous.caption;
-    evidence.path = previous.path;
-    evidence.detail = previous.detail;
   }
 });
 

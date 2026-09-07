@@ -26,4 +26,4 @@ export const projectMedia = [
   },
 ];
 
-export const publicAssets = ['style.css', 'studio.css', 'script.js', 'assets/favicon.svg', ...projectMedia.flatMap((item) => item.images.map((image) => image.src))];
+export const publicAssets = ['style.css', 'script.js', 'assets/favicon.svg', ...projectMedia.flatMap((item) => item.images.map((image) => image.src))];

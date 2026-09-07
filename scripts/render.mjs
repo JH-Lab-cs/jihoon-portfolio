@@ -18,7 +18,7 @@ export function pagePath(locale, page) {
   const prefix = locale === 'ko' ? 'ko/' : '';
   if (page === 'home') return `${prefix}index.html`;
   if (page === 'not-found') return `${prefix}404.html`;
-  return `${prefix}${['projects', 'contact', 'studio'].includes(page) ? page : `projects/${page}`}/index.html`;
+  return `${prefix}${['projects', 'contact'].includes(page) ? page : `projects/${page}`}/index.html`;
 }
 /** @param {string} from @param {string} to */
 export function relativeLink(from, to) {
@@ -56,31 +56,30 @@ function productProfile(project, locale) {
 function layout(locale, page, content, title, description, basePath = '/') {
   const { c, href, asset } = helpers(locale, page, basePath);
   const languageLink = /** @param {Locale} lang */ (lang) => page === 'not-found' ? `${basePath}${pagePath(lang, page)}` : relativeLink(pagePath(locale, page), pagePath(lang, page));
-  const studio = page === 'studio';
-  const workActive = !['home', 'studio', 'contact', 'not-found'].includes(page);
+  const workActive = !['home', 'contact', 'not-found'].includes(page);
   return `<!DOCTYPE html>
 <html lang="${locale}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="${escapeHtml(description)}">
-  <meta name="theme-color" content="${studio ? '#101511' : '#f8fafc'}">
+  <meta name="theme-color" content="#f8fafc">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>${escapeHtml(title)}</title>
   <link rel="alternate" hreflang="en" href="${languageLink('en')}">
   <link rel="alternate" hreflang="ko" href="${languageLink('ko')}">
   <link rel="icon" href="${asset('assets/favicon.svg')}" type="image/svg+xml">
-  <link rel="stylesheet" href="${asset('style.css')}">${studio ? `\n  <link rel="stylesheet" href="${asset('studio.css')}">` : ''}
+  <link rel="stylesheet" href="${asset('style.css')}">
   <script src="${asset('script.js')}" defer></script>
 </head>
 <body id="top" data-page="${escapeHtml(page)}">
   <a class="skip-link" href="#main">${c.skip}</a>
   <header class="site-header"><div class="container header-inner">
-    <a class="brand" href="${href(studio ? 'studio' : 'home')}" aria-label="JIHOON — ${c.home}">JIHOON<span class="brand-dot" aria-hidden="true">.</span></a>
+    <a class="brand" href="${href('home')}" aria-label="JIHOON — ${c.home}">JIHOON<span class="brand-dot" aria-hidden="true">.</span></a>
     <nav class="site-nav" id="site-nav" aria-label="${locale === 'en' ? 'Main navigation' : '주요 메뉴'}">
       <a href="${href('projects')}"${workActive ? ' class="is-active"' : ''}${page === 'projects' ? ' aria-current="page"' : ''}>${c.nav[0]}</a>
-      <a href="${href(studio ? 'studio' : 'home')}#approach">${c.nav[1]}</a>
+      <a href="${href('home')}#approach">${c.nav[1]}</a>
       <a href="${href('contact')}"${page === 'contact' ? ' aria-current="page"' : ''}>${c.nav[2]} ${arrow}</a>
     </nav>
     <div class="header-actions"><div class="language-switch" aria-label="${locale === 'en' ? 'Language' : '언어'}">
@@ -89,7 +88,7 @@ function layout(locale, page, content, title, description, basePath = '/') {
     </div><button class="menu-toggle" type="button" aria-controls="site-nav" aria-expanded="false" aria-label="${c.menu}" data-open-label="${c.menu}" data-close-label="${c.closeMenu}"><span></span><span></span></button></div>
   </div></header>
   <main id="main" tabindex="-1">${content}</main>
-  <footer class="site-footer container"><a class="brand footer-brand" href="${href(studio ? 'studio' : 'home')}">JIHOON<span class="brand-dot" aria-hidden="true">.</span></a><p>© <span data-current-year>2026</span> Jihoon. ${c.footer}</p><a class="edition-link" href="${href(studio ? 'home' : 'studio')}">${studio ? c.classicEdition : c.studioEdition} ${arrow}</a><a class="back-top" href="#top">${c.backTop} <span aria-hidden="true">↑</span></a></footer>
+  <footer class="site-footer container"><a class="brand footer-brand" href="${href('home')}">JIHOON<span class="brand-dot" aria-hidden="true">.</span></a><p>© <span data-current-year>2026</span> Jihoon. ${c.footer}</p><a class="back-top" href="#top">${c.backTop} <span aria-hidden="true">↑</span></a></footer>
 </body>
 </html>
 `;
@@ -115,7 +114,7 @@ function cta(locale, page) {
 export function renderHome(locale) {
   const { c, href } = helpers(locale, 'home');
   return layout(locale, 'home', `
-    <section class="hero container"><div class="hero-topline"><p class="eyebrow">${c.eyebrow}</p><a class="edition-link" href="${href('studio')}">${c.studioEdition} ${arrow}</a></div><h1>${c.headline[0]}<br><span>${c.headline[1]}</span></h1><div class="hero-bottom"><div class="hero-description"><p class="hero-intro">${c.intro}</p><p class="hero-technologies">${c.heroNote}</p></div><div class="hero-actions"><a class="button button-primary" href="#selected-work">${c.viewWork} <span aria-hidden="true">↓</span></a><a class="hero-email" href="mailto:${contactEmail}">${contactEmail} <span aria-hidden="true">↗</span></a></div></div></section>
+    <section class="hero container"><p class="eyebrow">${c.eyebrow}</p><h1>${c.headline[0]}<br><span>${c.headline[1]}</span></h1><div class="hero-bottom"><div class="hero-description"><p class="hero-intro">${c.intro}</p><p class="hero-technologies">${c.heroNote}</p></div><div class="hero-actions"><a class="button button-primary" href="#selected-work">${c.viewWork} <span aria-hidden="true">↓</span></a><a class="hero-email" href="mailto:${contactEmail}">${contactEmail} <span aria-hidden="true">↗</span></a></div></div></section>
     <section class="work-section container" id="selected-work"><div class="section-heading"><div><p class="eyebrow">${c.selectedLabel}</p><h2>${c.selectedTitle}</h2><p>${c.selectedIntro}</p></div><a class="text-link" href="${href('projects')}">${c.allWork} ${arrow}</a></div><div class="project-grid">${projects.filter((project) => project.kind === 'case').map((project, index) => projectCard(project, locale, 'home', index)).join('')}</div></section>
     <section class="expertise-section" id="approach"><div class="container"><div class="section-heading"><div><p class="eyebrow">${c.approachLabel}</p><h2>${c.approachTitle.split('\n').join('<br>')}</h2></div><p class="section-aside">${c.approachIntro}</p></div><div class="capability-grid">${capabilities.map((item, index) => `<a class="capability" href="${href(item.project)}#${item.anchor}"><span class="capability-index">${String(index + 1).padStart(2, '0')}</span><div><h3>${escapeHtml(item[locale].title)}</h3><p>${escapeHtml(item[locale].detail)}</p><span class="capability-source">${escapeHtml(projects.find((project) => project.slug === item.project)?.name ?? '')} ${arrow}</span></div></a>`).join('')}</div></div></section>
     <section class="explorations container"><div class="section-heading"><div><p class="eyebrow">${c.moreLabel}</p><h2>${c.moreTitle}</h2><p>${c.moreIntro}</p></div></div><div class="project-rows">${projects.filter((project) => project.kind !== 'case').map((project) => `<a class="project-row" href="${href(project.slug)}"><span class="row-name">${escapeHtml(project.name)}</span><span class="row-summary">${escapeHtml(productProfile(project, locale).summary)}</span><span class="row-status">${escapeHtml(project[locale].status)}</span><span aria-hidden="true">↗</span></a>`).join('')}</div></section>
@@ -123,20 +122,6 @@ export function renderHome(locale) {
     ${cta(locale, 'home')}`, c.siteTitle, c.description);
 }
 
-/** @param {Locale} locale */
-export function renderStudio(locale) {
-  const { c, href, asset } = helpers(locale, 'studio');
-  const placia = projectMedia.find((item) => item.project === 'placia');
-  if (!placia) throw new Error('Placia imagery is required for the studio edition.');
-  const featuredScreens = placia.images.map((screen, index) => `<a class="studio-device studio-device-${index + 1}" href="${href('placia')}#product-screens"><img src="${asset(screen.src)}" width="${screen.width}" height="${screen.height}" alt="${escapeHtml(screen[locale].alt)}" ${index === 0 ? 'fetchpriority="high"' : 'loading="eager"'} decoding="async"></a>`).join('');
-  const cards = projects.map((project, index) => {
-    const product = productProfile(project, locale);
-    const screen = projectMedia.find((item) => item.project === project.slug)?.images[0];
-    const stage = screen ? `<div class="studio-card-screen"><img src="${asset(screen.src)}" width="${screen.width}" height="${screen.height}" alt="${escapeHtml(screen[locale].alt)}" loading="lazy" decoding="async"></div>` : `<div class="studio-card-identity"><span>${escapeHtml(project.category)}</span><strong>${escapeHtml(project.name)}</strong><div class="studio-feature-list">${product.workflow.map((step, stepIndex) => `<p><span>${String(stepIndex + 1).padStart(2, '0')}</span>${escapeHtml(step.title)}</p>`).join('')}</div></div>`;
-    return `<article class="studio-card studio-card-${project.slug}"><a href="${href(project.slug)}"><div class="studio-card-top"><span>${String(index + 1).padStart(2, '0')} / ${escapeHtml(project.name)}</span><span>${escapeHtml(project[locale].status)}</span></div>${stage}<div class="studio-card-copy"><p class="studio-stack">${project.tags.map(escapeHtml).join(' / ')}</p><h3>${escapeHtml(product.title)}</h3><p>${escapeHtml(product.summary)}</p><span class="studio-card-link">${c.viewProject} ${arrow}</span></div></a></article>`;
-  }).join('');
-  return layout(locale, 'studio', `<section class="studio-hero container"><div class="studio-topline"><p class="eyebrow">JIHOON / STUDIO EDITION</p><a class="edition-link" href="${href('home')}">${c.classicEdition} ${arrow}</a></div><div class="studio-hero-grid"><div class="studio-hero-copy"><p class="studio-role">${c.heroProfile}</p><h1>${c.headline[0]}<br><span>${c.headline[1]}</span></h1><p class="studio-intro">${c.intro}</p><a class="studio-button" href="#selected-work">${c.viewWork}<span aria-hidden="true">↓</span></a></div><div class="studio-product-stage">${featuredScreens}<p class="studio-stage-caption">PLACIA <span>${c.sampleScreenLabel}</span></p></div></div><div class="studio-tech-strip"><span>${c.heroNote}</span><a href="mailto:${contactEmail}">${contactEmail} ${arrow}</a></div></section><section class="studio-work container" id="selected-work"><div class="studio-section-heading"><div><p class="eyebrow">${c.selectedLabel}</p><h2>${c.selectedTitle}</h2></div><p>${c.selectedIntro}</p></div><div class="studio-project-grid">${cards}</div></section><section class="studio-engineering" id="approach"><div class="container"><div class="studio-section-heading"><div><p class="eyebrow">${c.approachLabel}</p><h2>${c.approachTitle.split('\n').join('<br>')}</h2></div><p>${c.approachIntro}</p></div><div class="studio-capabilities">${capabilities.map((item, index) => `<a href="${href(item.project)}#${item.anchor}"><span class="studio-capability-number">${String(index + 1).padStart(2, '0')}</span><div><h3>${escapeHtml(item[locale].title)}</h3><p>${escapeHtml(item[locale].detail)}</p><span class="studio-card-link">${escapeHtml(projects.find((project) => project.slug === item.project)?.name ?? '')} ${arrow}</span></div></a>`).join('')}</div></div></section><section class="studio-practice container"><div><p class="eyebrow">03 / DEVELOPMENT PRACTICE</p><h2>${c.aboutTitle}</h2><p>${c.aboutText}</p></div><ol>${c.approachItems.map(([title, detail], index) => `<li><span>${String(index + 1).padStart(2, '0')}</span><div><h3>${title}</h3><p>${detail}</p></div></li>`).join('')}</ol><a class="studio-reuse" href="${href('resol-math')}#implementation"><p class="eyebrow">${c.reuseLabel}</p><h3>${c.reuseTitle} ${arrow}</h3><p>${c.reuseText}</p></a></section><section class="studio-contact container"><p class="eyebrow">${c.ctaLabel}</p><h2>${c.ctaTitle}</h2><p>${c.ctaText}</p><a href="mailto:${contactEmail}">${contactEmail} ${arrow}</a></section>`, `${c.siteTitle} — Studio`, c.description);
-}
 /** @param {Locale} locale */
 export function renderProjects(locale) {
   const c = copy[locale];
@@ -186,11 +171,12 @@ export function renderProject(locale, project) {
   const product = productProfile(project, locale);
   const sections = /** @type {const} */ (['problem', 'decision', 'implementation', 'tradeoff', 'verification', 'boundary']);
   const toc = [['overview', c.overview], ['engineering', c.technicalLabel], ...sections.map((section) => [section, c[section]])];
-  if (projectMedia.some((item) => item.project === project.slug)) toc.splice(1, 0, ['product-screens', c.screensTitle]);
+  const hasScreens = projectMedia.some((item) => item.project === project.slug);
+  if (hasScreens) toc.splice(1, 0, ['product-screens', c.screensTitle]);
   if (investigations.some((item) => item.project === project.slug)) toc.splice(toc.length - 1, 0, ['related-engineering', c.investigationsTitle]);
   const next = projects[(projects.indexOf(project) + 1) % projects.length];
   return layout(locale, project.slug, `
-    <section class="case-heading container"><a class="text-link breadcrumb" href="${href('projects')}"><span aria-hidden="true">←</span> ${c.returnWork}</a><p class="eyebrow">${project.category}</p><h1>${escapeHtml(project.name)}</h1><p class="case-product-title">${escapeHtml(product.title)}</p><p class="case-summary">${escapeHtml(product.summary)}</p><div class="case-meta"><span class="status-label">${p.status}</span><a class="text-link" href="#engineering">${c.readCase} <span aria-hidden="true">↓</span></a></div></section>
+    <section class="case-heading container"><a class="text-link breadcrumb" href="${href('projects')}"><span aria-hidden="true">←</span> ${c.returnWork}</a><p class="eyebrow">${project.category}</p><h1>${escapeHtml(project.name)}</h1><p class="case-product-title">${escapeHtml(product.title)}</p><p class="case-summary">${escapeHtml(product.summary)}</p><div class="case-meta"><span class="status-label">${p.status}</span>${hasScreens ? `<a class="text-link" href="#product-screens">${c.viewScreens} <span aria-hidden="true">↓</span></a>` : ''}<a class="text-link" href="#engineering">${c.readCase} <span aria-hidden="true">↓</span></a></div></section>
     <div class="case-layout container"><aside class="case-sidebar"><div class="case-sidebar-inner"><div class="case-identity tone-${project.tone}"><strong>${escapeHtml(project.name)}</strong><span>${project.category}</span></div><dl><dt>${c.status}</dt><dd>${p.status}</dd><dt>${c.stack}</dt><dd>${project.tags.join(' · ')}</dd><dt>${c.process}</dt><dd>${c.processValue}</dd></dl><nav class="case-toc" aria-label="${locale === 'en' ? 'On this page' : '이 페이지의 내용'}">${toc.map(([id, label]) => `<a href="#${id}">${escapeHtml(label)} <span aria-hidden="true">↘</span></a>`).join('')}</nav></div></aside>
       <article class="case-article">${renderOverview(locale, project)}<section class="engineering-intro" id="engineering"><p class="eyebrow">${project.kind === 'case' ? c.caseLabel : c.projectLabel}</p><h2>${escapeHtml(p.title)}</h2><p>${escapeHtml(p.summary)}</p></section>${sections.map((section, index) => `<section id="${section}" class="case-section"><p class="eyebrow">${String(index + 1).padStart(2, '0')}</p><h2>${c[section]}</h2><p>${escapeHtml(p[section])}</p>${section === 'implementation' ? renderWalkthrough(locale, project) : ''}${section === 'verification' ? `<div class="result-note"><span aria-hidden="true">↗</span><div><strong>${escapeHtml(p.result)}</strong><p>${escapeHtml(p.resultDetail)}</p></div></div>${renderEvidence(locale, project)}` : ''}</section>${section === 'verification' ? renderInvestigations(locale, project) : ''}`).join('')}<div class="evidence-note"><p class="eyebrow">${c.evidenceLabel}</p><p>${c.evidenceNote}</p></div></article>
     </div><nav class="next-project container" aria-label="${c.nextProject}"><a class="text-link" href="${href('projects')}">← ${c.returnWork}</a><a href="${href(next.slug)}"><span>${c.nextProject}</span><strong>${escapeHtml(next.name)} ${arrow}</strong></a></nav>`, `${project.name} — ${product.title} | JIHOON`, product.summary);
@@ -213,7 +199,6 @@ export function renderAll(basePath = '/') {
   const pages = new Map();
   for (const locale of /** @type {const} */ (['en', 'ko'])) {
     pages.set(pagePath(locale, 'home'), renderHome(locale));
-    pages.set(pagePath(locale, 'studio'), renderStudio(locale));
     pages.set(pagePath(locale, 'projects'), renderProjects(locale));
     pages.set(pagePath(locale, 'contact'), renderContact(locale));
     pages.set(pagePath(locale, 'not-found'), renderNotFound(locale, prefix));

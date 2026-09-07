@@ -21,7 +21,7 @@ test('HTTP delivery serves both languages and enforces static-file boundaries', 
     server.once('exit', (code) => reject(new Error(`Preview server exited before ready: ${code}`)));
   });
   const get = (path, options) => fetch(`http://127.0.0.1:4174${path}`, options);
-  for (const [path, locale] of [['/', 'en'], ['/ko/', 'ko'], ['/studio/', 'en'], ['/ko/studio/', 'ko'], ['/projects/placia/', 'en'], ['/ko/projects/whiskory/', 'ko']]) {
+  for (const [path, locale] of [['/', 'en'], ['/ko/', 'ko'], ['/projects/placia/', 'en'], ['/ko/projects/whiskory/', 'ko']]) {
     const response = await get(path);
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get('content-type'), /^text\/html/);
@@ -31,7 +31,7 @@ test('HTTP delivery serves both languages and enforces static-file boundaries', 
   const redirect = await get('/ko/projects?source=test', { redirect: 'manual' });
   assert.equal(redirect.status, 308);
   assert.equal(redirect.headers.get('location'), '/ko/projects/?source=test');
-  for (const path of ['/.git/config', '/.openai/hosting.json', '/%2e%2e%2fpackage.json', '/content/projects.mjs', '/missing/deep/path']) {
+  for (const path of ['/studio/', '/ko/studio/', '/studio.css', '/.git/config', '/.openai/hosting.json', '/%2e%2e%2fpackage.json', '/content/projects.mjs', '/missing/deep/path']) {
     const response = await get(path);
     assert.equal(response.status, 404, path);
     assert.ok(!(await response.text()).includes('appgprj_'));

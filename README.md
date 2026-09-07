@@ -51,7 +51,6 @@ node /opt/homebrew/lib/node_modules/npm/bin/npm-cli.js run build
   implementation notes linked to the corresponding case studies.
 - `scripts/render.mjs`: Shared layouts and relative route generation.
 - `style.css`: Responsive theme, keyboard focus, and reduced-motion behavior.
-- `studio.css`: The separate Studio home-page design at `studio/` and `ko/studio/`.
 - `script.js`: Progressively enhanced navigation and copyright year.
 
 The build writes complete HTML to the existing source routes and to `dist/`.
@@ -101,13 +100,13 @@ its Korean language link remains available. GitHub Pages does not interpret
 additional HTTP response headers are provided by the local server and compatible
 hosts. The source repository is public; only website assets enter the Pages build.
 
-## Design editions and product evidence
+## Product evidence
 
-The Classic home remains at `/` and `/ko/`. Studio is a separate, more expressive
-home at `/studio/` and `/ko/studio/`; both reuse the same project descriptions,
-technical topics, contact details, and project-detail pages. Language switches
-retain the chosen edition. Project-detail pages contain the shared screenshots
-and implementation references, so content updates apply to both presentations.
+The portfolio uses one design at `/` and `/ko/`. Project-detail pages show
+reviewed app screenshots after the product introduction and before the technical
+case. A header link and page navigation lead directly to the gallery when images
+are available. Captions explain the capture context, and each image opens at its
+original resolution. Both languages share the same media and source references.
 
 Three original screenshots were inspected and copied without alteration:
 

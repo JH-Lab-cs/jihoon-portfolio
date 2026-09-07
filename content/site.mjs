@@ -113,11 +113,9 @@ export const copy = {
     "scenariosLabel": "Scenarios and expected behavior",
     "scenarioLabel": "Scenario",
     "expectedLabel": "Expected behavior / recorded result",
-    "classicEdition": "Classic edition",
-    "studioEdition": "Studio edition",
-    "sampleScreenLabel": "iOS app · sample data",
     "screensLabel": "PRODUCT SCREENS",
     "screensTitle": "A look inside the product",
+    "viewScreens": "View app screens",
     "fullImageLabel": "Open full image",
     "sourceEvidenceTitle": "Implementation and test references"
   },
@@ -232,11 +230,9 @@ export const copy = {
     "scenariosLabel": "상황별 동작과 검증",
     "scenarioLabel": "발생 상황",
     "expectedLabel": "기대 동작 · 확인 결과",
-    "classicEdition": "기본 버전",
-    "studioEdition": "스튜디오 버전",
-    "sampleScreenLabel": "iOS 앱 · 샘플 데이터",
     "screensLabel": "PRODUCT SCREENS",
     "screensTitle": "화면으로 보는 제품",
+    "viewScreens": "앱 화면 보기",
     "fullImageLabel": "원본 이미지 보기",
     "sourceEvidenceTitle": "구현과 테스트의 확인 근거"
   }
