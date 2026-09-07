@@ -43,10 +43,15 @@ node /opt/homebrew/lib/node_modules/npm/bin/npm-cli.js run build
   for the six projects; used in both listings and project-detail introductions.
 - `content/walkthroughs.mjs`: Four engineering execution sequences, invariants,
   scenario tables, and verification scope statements for the main case studies.
+- `content/evidence.mjs`: Source and test references for the four main cases.
+  These are review notes, not links to the private implementation repositories.
+- `content/media.mjs`: Reviewed screenshots, bilingual captions, and the explicit
+  asset list used by the build and route checks.
 - `content/engineering.mjs`: Six technical focus areas and nine additional
   implementation notes linked to the corresponding case studies.
 - `scripts/render.mjs`: Shared layouts and relative route generation.
 - `style.css`: Responsive theme, keyboard focus, and reduced-motion behavior.
+- `studio.css`: The separate Studio home-page design at `studio/` and `ko/studio/`.
 - `script.js`: Progressively enhanced navigation and copyright year.
 
 The build writes complete HTML to the existing source routes and to `dist/`.
@@ -95,6 +100,30 @@ its Korean language link remains available. GitHub Pages does not interpret
 `_headers`; the HTML meta CSP and referrer policy remain present, while the
 additional HTTP response headers are provided by the local server and compatible
 hosts. The source repository is public; only website assets enter the Pages build.
+
+## Design editions and product evidence
+
+The Classic home remains at `/` and `/ko/`. Studio is a separate, more expressive
+home at `/studio/` and `/ko/studio/`; both reuse the same project descriptions,
+technical topics, contact details, and project-detail pages. Language switches
+retain the chosen edition. Project-detail pages contain the shared screenshots
+and implementation references, so content updates apply to both presentations.
+
+Three original screenshots were inspected and copied without alteration:
+
+- `assets/screens/placia-atlas.webp` and `placia-capsules.webp`: real iOS simulator
+  captures from Placia's screenshot fixtures, using fixed Tokyo, Jeju, and Taipei
+  sample data. Provenance: the Placia release screenshot README and
+  `Placia/App/StoreScreenshotFixture.swift`; the originals are the English WebP
+  exports used by its product site. They show an in-development app, not a release.
+- `assets/screens/whiskory-collection.png`: signed-out local web capture from the
+  September 5, 2026 verification. The empty collection and development badge are
+  retained. It contains no private collection or account information.
+
+No authentic Resol Routine UI capture or suitable public demo recording was found
+in the reviewed artifacts. Illustrative marketing dashboards were not substituted
+for app evidence. The additional source references were reviewed September 7, 2026;
+historical test results retain their original environment and checkpoint scope.
 
 ## Content evidence
 

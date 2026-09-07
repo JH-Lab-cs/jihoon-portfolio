@@ -3,22 +3,24 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
-import { renderAll, renderHome, renderProject, escapeHtml, pagePath, normalizeBasePath } from '../scripts/render.mjs';
+import { renderAll, renderHome, renderStudio, renderProject, escapeHtml, pagePath, normalizeBasePath } from '../scripts/render.mjs';
 import { projects } from '../content/projects.mjs';
 import { copy, contactEmail } from '../content/site.mjs';
 import { capabilities, investigations } from '../content/engineering.mjs';
 import { productProfiles } from '../content/products.mjs';
 import { walkthroughs } from '../content/walkthroughs.mjs';
+import { projectMedia, publicAssets } from '../content/media.mjs';
+import { implementationEvidence } from '../content/evidence.mjs';
 
 const pages = renderAll();
 const documents = new Map([...pages].map(([path, html]) => [path, parseHTML(html).document]));
-const assets = new Set(['style.css', 'script.js', 'assets/favicon.svg']);
+const assets = new Set(publicAssets);
 
 test('both languages include every project and the existing public routes', () => {
-  assert.equal(pages.size, 20);
+  assert.equal(pages.size, 22);
   assert.equal(new Set(projects.map((project) => project.slug)).size, 6);
   for (const locale of ['en', 'ko']) {
-    for (const page of ['home', 'projects', 'contact', ...projects.map((project) => project.slug)]) {
+    for (const page of ['home', 'studio', 'projects', 'contact', ...projects.map((project) => project.slug)]) {
       const doc = documents.get(pagePath(locale, page));
       assert.ok(doc);
       assert.equal(doc.documentElement.lang, locale);
@@ -187,7 +189,7 @@ test('product and walkthrough content cannot inject markup into new rendering su
     walk.checks[0][1] = payload;
     for (const html of [renderHome('en'), renderProject('en', projects[0])]) {
       const doc = parseHTML(html).document;
-      assert.equal(doc.querySelectorAll('[onerror], img, script:not([src])').length, 0);
+      assert.equal(doc.querySelectorAll('[onerror], script:not([src])').length, 0);
       assert.ok(doc.body.textContent.includes(payload));
     }
   } finally {
@@ -195,6 +197,94 @@ test('product and walkthrough content cannot inject markup into new rendering su
     profile.workflow[0].detail = originalDetail;
     walk.invariant = originalInvariant;
     walk.checks[0][1] = originalCheck;
+  }
+});
+
+test('studio is a separate bilingual edition with shared content and working classic links', () => {
+  for (const locale of ['en', 'ko']) {
+    const studio = documents.get(pagePath(locale, 'studio'));
+    const classic = documents.get(pagePath(locale, 'home'));
+    assert.equal(studio.querySelectorAll('.studio-card').length, projects.length);
+    assert.equal(studio.querySelectorAll('.studio-capabilities > a').length, capabilities.length);
+    assert.equal(studio.querySelectorAll('link[rel="stylesheet"]').length, 2);
+    assert.equal(classic.querySelectorAll('link[rel="stylesheet"]').length, 1);
+    assert.equal(classic.querySelector('.studio-hero'), null);
+    assert.ok(studio.querySelector('.studio-hero h1').textContent.includes(copy[locale].headline[0]));
+    assert.equal(studio.querySelector('.studio-intro').textContent, copy[locale].intro);
+    for (const profile of productProfiles) {
+      assert.ok(studio.body.textContent.includes(profile[locale].title));
+      assert.ok(studio.body.textContent.includes(profile[locale].summary));
+    }
+    const classicLink = studio.querySelector('.studio-topline .edition-link');
+    const studioLink = classic.querySelector('.hero-topline .edition-link');
+    for (const [link, from, target] of [[classicLink, 'studio', 'home'], [studioLink, 'home', 'studio']]) {
+      assert.equal(new URL(link.getAttribute('href'), `https://portfolio.test/${pagePath(locale, from)}`).pathname.slice(1), pagePath(locale, target));
+    }
+  }
+});
+
+test('product screens have local assets, dimensions, captions, and explicit image links', async () => {
+  assert.equal(projectMedia.flatMap((item) => item.images).length, 3);
+  for (const group of projectMedia) {
+    for (const screen of group.images) {
+      assert.ok((await readFile(new URL(`../${screen.src}`, import.meta.url))).length > 1000);
+      assert.ok(screen.width > 0 && screen.height > 0);
+      assert.ok(publicAssets.includes(screen.src));
+    }
+    for (const locale of ['en', 'ko']) {
+      const doc = documents.get(pagePath(locale, group.project));
+      const gallery = doc.querySelector('#product-screens');
+      assert.ok(gallery);
+      assert.equal(gallery.querySelectorAll('figure').length, group.images.length);
+      for (const [index, figure] of [...gallery.querySelectorAll('figure')].entries()) {
+        const screen = group.images[index];
+        assert.equal(figure.querySelector('img').getAttribute('alt'), screen[locale].alt);
+        assert.equal(figure.querySelector('img').getAttribute('width'), String(screen.width));
+        assert.equal(figure.querySelector('img').getAttribute('height'), String(screen.height));
+        assert.ok(figure.querySelector('figcaption').textContent.includes(screen[locale].caption));
+        assert.equal(figure.querySelector('a').getAttribute('rel'), 'noopener');
+      }
+    }
+  }
+});
+
+test('main case studies include specific source and test references without exposing private repository links', () => {
+  assert.equal(implementationEvidence.length, 4);
+  for (const evidence of implementationEvidence) {
+    for (const locale of ['en', 'ko']) {
+      const doc = documents.get(pagePath(locale, evidence.project));
+      const reference = doc.querySelector('#verification #implementation-evidence');
+      assert.ok(reference);
+      assert.equal(reference.querySelectorAll('code').length, evidence[locale].references.length);
+      assert.equal(reference.querySelectorAll('a').length, 0);
+      for (const file of evidence[locale].references) {
+        assert.ok(reference.textContent.includes(file.path));
+        assert.ok(reference.textContent.includes(file.detail));
+      }
+    }
+  }
+});
+
+test('image captions and source references are escaped in both editions', () => {
+  const screen = projectMedia[0].images[0].en;
+  const evidence = implementationEvidence[0].en.references[0];
+  const previous = { alt: screen.alt, caption: screen.caption, path: evidence.path, detail: evidence.detail };
+  const payload = '<img src=x onerror=alert(1)>';
+  try {
+    screen.alt = payload;
+    screen.caption = payload;
+    evidence.path = payload;
+    evidence.detail = payload;
+    for (const html of [renderStudio('en'), renderProject('en', projects[0])]) {
+      const doc = parseHTML(html).document;
+      assert.equal(doc.querySelectorAll('[onerror], script:not([src])').length, 0);
+      assert.ok([...doc.querySelectorAll('img')].some((image) => image.getAttribute('alt') === payload));
+    }
+  } finally {
+    screen.alt = previous.alt;
+    screen.caption = previous.caption;
+    evidence.path = previous.path;
+    evidence.detail = previous.detail;
   }
 });
 

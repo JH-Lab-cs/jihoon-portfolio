@@ -112,7 +112,14 @@ export const copy = {
     "flowLabel": "How the implementation works",
     "scenariosLabel": "Scenarios and expected behavior",
     "scenarioLabel": "Scenario",
-    "expectedLabel": "Expected behavior / recorded result"
+    "expectedLabel": "Expected behavior / recorded result",
+    "classicEdition": "Classic edition",
+    "studioEdition": "Studio edition",
+    "sampleScreenLabel": "iOS app · sample data",
+    "screensLabel": "PRODUCT SCREENS",
+    "screensTitle": "A look inside the product",
+    "fullImageLabel": "Open full image",
+    "sourceEvidenceTitle": "Implementation and test references"
   },
   "ko": {
     "siteTitle": "JIHOON — 백엔드 개발 · 애플리케이션 보안",
@@ -224,6 +231,13 @@ export const copy = {
     "flowLabel": "실제 처리 순서",
     "scenariosLabel": "상황별 동작과 검증",
     "scenarioLabel": "발생 상황",
-    "expectedLabel": "기대 동작 · 확인 결과"
+    "expectedLabel": "기대 동작 · 확인 결과",
+    "classicEdition": "기본 버전",
+    "studioEdition": "스튜디오 버전",
+    "sampleScreenLabel": "iOS 앱 · 샘플 데이터",
+    "screensLabel": "PRODUCT SCREENS",
+    "screensTitle": "화면으로 보는 제품",
+    "fullImageLabel": "원본 이미지 보기",
+    "sourceEvidenceTitle": "구현과 테스트의 확인 근거"
   }
 };

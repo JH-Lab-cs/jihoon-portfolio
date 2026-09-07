@@ -31,7 +31,7 @@ export const productProfiles = [
       workflow: [
         { title: 'Manage a collection', detail: 'Keep a record of your whiskey bottles in a personal collection.' },
         { title: 'Record your taste', detail: 'Save tasting notes and explore recommendations for your next bottle.' },
-        { title: 'Choose what to share', detail: 'Control public visibility and take part in image sharing with a moderation workflow.' },
+        { title: 'Choose what to share', detail: 'Control public visibility through an image publication and review workflow under development.' },
       ],
     },
     ko: {
@@ -41,7 +41,7 @@ export const productProfiles = [
       workflow: [
         { title: '컬렉션 관리', detail: '내가 보유한 위스키를 개인 컬렉션에 기록합니다.' },
         { title: '시음과 취향 기록', detail: '시음 노트를 남기고 다음에 마셔볼 위스키의 추천을 탐색합니다.' },
-        { title: '선택적 공유', detail: '공개 범위를 정하고 심사 절차를 거쳐 이미지를 공유합니다.' },
+        { title: '선택적 공유', detail: '공개 범위를 정하고 이미지를 공유할 수 있도록 심사 흐름을 개발합니다.' },
       ],
     },
   },

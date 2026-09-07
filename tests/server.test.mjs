@@ -21,7 +21,7 @@ test('HTTP delivery serves both languages and enforces static-file boundaries', 
     server.once('exit', (code) => reject(new Error(`Preview server exited before ready: ${code}`)));
   });
   const get = (path, options) => fetch(`http://127.0.0.1:4174${path}`, options);
-  for (const [path, locale] of [['/', 'en'], ['/ko/', 'ko'], ['/projects/placia/', 'en'], ['/ko/projects/whiskory/', 'ko']]) {
+  for (const [path, locale] of [['/', 'en'], ['/ko/', 'ko'], ['/studio/', 'en'], ['/ko/studio/', 'ko'], ['/projects/placia/', 'en'], ['/ko/projects/whiskory/', 'ko']]) {
     const response = await get(path);
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get('content-type'), /^text\/html/);
@@ -50,4 +50,10 @@ test('HTTP delivery serves both languages and enforces static-file boundaries', 
   assert.equal(await head.text(), '');
   const script = await get('/script.js');
   assert.match(script.headers.get('content-type'), /^text\/javascript/);
+  for (const [path, type] of [['/assets/screens/placia-atlas.webp', 'image/webp'], ['/assets/screens/whiskory-collection.png', 'image/png']]) {
+    const image = await get(path);
+    assert.equal(image.status, 200);
+    assert.equal(image.headers.get('content-type'), type);
+    assert.ok((await image.arrayBuffer()).byteLength > 1000);
+  }
 });
